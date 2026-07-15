@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>دستیار تقلب 🤫</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>دستیار تقلب دانشگاه، مدرسه، دبیرستان 🤫</h1>
+    <details style="text-align: center;margin-bottom: 20px;"><summary>چطوری باهاش کار کنیم؟</summary>
+        کافیه یک pdf از <strong>جزوه نه کتاب</strong> بدی تا هوش مصنوعی ازش یاد بگیره و بهت پاسخ بده<br/>
+        در صورت هر خطایی لطفا به من <a href="https://github.com/keyhan-tiny112">کیهان سازنده این سایت</a> گزارش دهید 😇
+    </details>
+
+
+    <div class="card">
+
+        <h2>آپلود کتاب (<strong>*الزامی</strong>)</h2>
+
+        <input type="file" id="pdfFile">
+
+        <button onclick="uploadPdf()">
+            آپلود
+        </button>
+
+        <div id="uploadStatus"></div>
+
+    </div>
+
+    <div class="card">
+
+        <h2>وارد کردن apikey (<strong>* بسیار الزامی</strong>)</h2>
+
+        <input inputmode="kana-name"/>
+
+        <details style="margin-bottom: 10px;margin-top: 10px;"><summary>apikey چیست و چطوری به دستش بیاریم؟</summary>
+            apikey یک کلید هست تا ما بتونیم از هوش مصنوعی جمنای استفاده کنیم<br/>
+            <h3>چطوری بگیریمش؟</h3>
+            خیلی سادس! اول باید بریم به سایت <a href="https://googleapis.com">googleapis.com</a> بشیم و apikey بگریم
+            و بعد توی این ورودی apikey رو بزار و بعد pdf جزوه ات و بعد سوالت و تمام!
+        </details>
+
+        <button onclick="getAPIKey()">
+            ثبت apikey
+        </button>
+
+    </div>
+
+    <div class="card">
+
+        <h2>پرسش از کتاب</h2>
+
+        <textarea
+            id="question"
+            placeholder="سؤال خود را بنویسید..."
+        ></textarea>
+
+        <button onclick="askQuestion()">
+            ارسال سؤال
+        </button>
+
+    </div>
+
+    <div class="card">
+
+        <h2>پاسخ</h2>
+
+        <div id="answer"></div>
+
+    </div>
+
+    <div class="card">
+
+        <h2>منابع</h2>
+
+        <div id="sources"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+async function uploadPdf() {
+
+    const fileInput = document.getElementById("pdfFile");
+
+    if(fileInput.files.length === 0){
+        alert("یک فایل انتخاب کنید");
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append(
+        "file",
+        fileInput.files[0]
+    );
+
+    document.getElementById("uploadStatus")
+        .innerText = "در حال پردازش...";
+
+    const response = await fetch(
+        "/ingest",
+        {
+            method: "POST",
+            body: formData
+        }
+    );
+
+    const data = await response.json();
+
+    document.getElementById("uploadStatus")
+        .innerText =
+        `تعداد صفحات: ${data.pages}
+         تعداد بخش‌ها: ${data.chunks}`;
+}
+
+async function getAPIKey() {
+    
+}
+
+async function askQuestion() {
+
+    const question =
+        document.getElementById("question").value;
+
+    if(!question.trim()){
+        return;
+    }
+
+    document.getElementById("answer")
+        .innerText = "در حال تولید پاسخ...";
+
+    const response = await fetch(
+        "/ask",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({
+                question: question,
+                top_k: 5
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    document.getElementById("answer")
+        .innerHTML = data.answer;
+
+    let html = "";
+
+    data.sources.forEach(source => {
+
+        html += `
+        <div class="source">
+            <b>صفحه ${source.page}</b>
+            <br>
+            ${source.text}
+        </div>
+        `;
+    });
+
+    document.getElementById("sources")
+        .innerHTML = html;
+}
+
+</script>
+
+</body>
+</html>
